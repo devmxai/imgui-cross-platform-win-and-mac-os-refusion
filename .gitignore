@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+*.log
+.tmp/
+apps/imgui/build/
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
