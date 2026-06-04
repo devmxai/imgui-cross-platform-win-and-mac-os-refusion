@@ -68,6 +68,9 @@ const appTokens = [
   "MacMetalRenderFrameExecutor",
   "FinalFrameSurface",
   "renderMotionBlurTexture",
+  "drawDropShadow",
+  "drawBorder",
+  "mac_preview_shape_fragment",
 ];
 for (const token of appTokens) {
   if (!app.includes(token)) {

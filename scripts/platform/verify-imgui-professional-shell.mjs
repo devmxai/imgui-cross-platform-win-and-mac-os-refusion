@@ -23,6 +23,10 @@ const requiredTokens = [
   'OpenProject',
   'RequestExport',
   'BeginPlayback',
+  'mac_preview_shape_fragment',
+  'drawDropShadow',
+  'drawBorder',
+  'cornerRadii',
 ];
 
 function collectFiles(dir) {

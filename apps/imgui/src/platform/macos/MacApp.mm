@@ -12,6 +12,7 @@
 #include "ui/EditorShell.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <deque>
@@ -371,7 +372,12 @@ struct MacPreviewVertex {
 
 struct MacPreviewUniforms {
   vector_float4 tint;
+  vector_float4 cornerRadii;
+  vector_float2 size;
   float opacity;
+  float borderWidth;
+  uint32_t mode;
+  uint32_t shapeKind;
 };
 
 struct MacMotionTileUniforms {
@@ -397,7 +403,12 @@ struct MacPreviewVertex {
 
 struct MacPreviewUniforms {
     float4 tint;
+    float4 cornerRadii;
+    float2 size;
     float opacity;
+    float borderWidth;
+    uint mode;
+    uint shapeKind;
 };
 
 struct MacMotionTileUniforms {
@@ -424,12 +435,66 @@ vertex VertexOut mac_preview_vertex(const device MacPreviewVertex *vertices [[bu
     return out;
 }
 
+float mac_rounded_rect_alpha(float2 uv, float2 size, float4 cornerRadii) {
+    float radius = cornerRadii.x;
+    if (uv.x >= 0.5 && uv.y < 0.5) {
+        radius = cornerRadii.y;
+    } else if (uv.x >= 0.5 && uv.y >= 0.5) {
+        radius = cornerRadii.z;
+    } else if (uv.x < 0.5 && uv.y >= 0.5) {
+        radius = cornerRadii.w;
+    }
+    radius = clamp(radius, 0.0, min(size.x, size.y) * 0.5);
+    if (radius <= 0.0) { return 1.0; }
+    float2 p = (uv - 0.5) * size;
+    float2 b = size * 0.5 - float2(radius);
+    float2 q = abs(p) - b;
+    float distance = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
+    return 1.0 - smoothstep(-1.0, 1.0, distance);
+}
+
+float mac_ellipse_alpha(float2 uv) {
+    float distance = length((uv - 0.5) * 2.0) - 1.0;
+    return 1.0 - smoothstep(-0.015, 0.015, distance);
+}
+
+float mac_line_alpha(float2 uv, float2 size) {
+    float halfWidth = max(0.004, min(0.5, 1.0 / max(1.0, size.y)));
+    return 1.0 - smoothstep(halfWidth, halfWidth + 0.01, abs(uv.y - 0.5));
+}
+
+float mac_arrow_alpha(float2 uv, float2 size) {
+    float width = max(0.008, min(0.12, 2.0 / max(1.0, size.y)));
+    float shaft = mac_line_alpha(uv, size) * (1.0 - smoothstep(0.80, 0.88, uv.x));
+    float2 tip = float2(0.98, 0.5);
+    float2 upper = float2(0.80, 0.28);
+    float2 lower = float2(0.80, 0.72);
+    float headTop = abs((uv.y - tip.y) - (upper.y - tip.y) / (upper.x - tip.x) * (uv.x - tip.x));
+    float headBottom = abs((uv.y - tip.y) - (lower.y - tip.y) / (lower.x - tip.x) * (uv.x - tip.x));
+    float head = (1.0 - smoothstep(width, width + 0.012, min(headTop, headBottom))) * step(0.76, uv.x);
+    return max(shaft, head);
+}
+
+float mac_shape_alpha(float2 uv, float2 size, float4 cornerRadii, uint shapeKind) {
+    if (shapeKind == 1) {
+        return mac_ellipse_alpha(uv);
+    }
+    if (shapeKind == 2) {
+        return mac_line_alpha(uv, size);
+    }
+    if (shapeKind == 3) {
+        return mac_arrow_alpha(uv, size);
+    }
+    return mac_rounded_rect_alpha(uv, size, cornerRadii);
+}
+
 fragment float4 mac_preview_texture_fragment(VertexOut in [[stage_in]],
                                              texture2d<float> texture [[texture(0)]],
                                              constant MacPreviewUniforms &u [[buffer(0)]]) {
     constexpr sampler s(address::clamp_to_edge, filter::linear);
     float4 color = texture.sample(s, in.uv) * u.tint;
-    color.a *= u.opacity;
+    float coverage = mac_rounded_rect_alpha(in.uv, u.size, u.cornerRadii) * u.opacity;
+    color.a *= coverage;
     color.rgb *= color.a;
     return color;
 }
@@ -439,8 +504,26 @@ fragment float4 mac_preview_premultiplied_fragment(VertexOut in [[stage_in]],
                                                    constant MacPreviewUniforms &u [[buffer(0)]]) {
     constexpr sampler s(address::clamp_to_edge, filter::linear);
     float4 color = texture.sample(s, in.uv) * u.tint;
-    color.rgb *= u.opacity;
-    color.a *= u.opacity;
+    float coverage = mac_rounded_rect_alpha(in.uv, u.size, u.cornerRadii) * u.opacity;
+    color.rgb *= coverage;
+    color.a *= coverage;
+    return color;
+}
+
+fragment float4 mac_preview_shape_fragment(VertexOut in [[stage_in]],
+                                           constant MacPreviewUniforms &u [[buffer(0)]]) {
+    float outer = mac_shape_alpha(in.uv, u.size, u.cornerRadii, u.shapeKind);
+    float alpha = outer;
+    if (u.mode == 1 && u.borderWidth > 0.0) {
+        float2 innerSize = max(float2(1.0), u.size - float2(u.borderWidth * 2.0));
+        float2 innerUv = (in.uv - 0.5) * (u.size / innerSize) + 0.5;
+        float4 innerRadii = max(float4(0.0), u.cornerRadii - float4(u.borderWidth));
+        float inner = mac_shape_alpha(innerUv, innerSize, innerRadii, u.shapeKind);
+        alpha = max(0.0, outer - inner);
+    }
+    float4 color = u.tint;
+    color.a *= alpha * u.opacity;
+    color.rgb *= color.a;
     return color;
 }
 
@@ -813,6 +896,8 @@ struct NativeFrameDescriptorNode {
   double skewOffsetXDegrees = 0.0;
   double skewOffsetYDegrees = 0.0;
   double animationCornerRadius = std::numeric_limits<double>::quiet_NaN();
+  double animationBorderOpacity = std::numeric_limits<double>::quiet_NaN();
+  double animationShadowOpacity = std::numeric_limits<double>::quiet_NaN();
 };
 
 struct NativeRenderGraphNode {
@@ -835,6 +920,18 @@ struct NativeRenderGraphNode {
   double cornerRadiusBottomLeft = 0.0;
   std::string fillColor = "#000000";
   double fillOpacity = 1.0;
+  bool borderEnabled = false;
+  double borderWidth = 0.0;
+  std::string borderColor = "#FFFFFF";
+  double borderOpacity = 1.0;
+  std::string borderPosition = "inside";
+  bool shadowEnabled = false;
+  double shadowX = 0.0;
+  double shadowY = 0.0;
+  double shadowBlur = 0.0;
+  double shadowSpread = 0.0;
+  std::string shadowColor = "#000000";
+  double shadowOpacity = 1.0;
 };
 
 struct NativeFXPass {
@@ -861,6 +958,12 @@ struct NativeResolvedTexture {
   double boundsScaleX = 1.0;
   double boundsScaleY = 1.0;
   bool premultiplied = false;
+};
+
+struct NativeCompositeNode {
+  NativeRenderGraphNode styleNode;
+  NativeRenderGraphNode drawNode;
+  NativeResolvedTexture resolved;
 };
 
 struct NativeMotionBlurSample {
@@ -1033,6 +1136,8 @@ NativeFrameDescriptorNode EvaluateAnimation(const NativeFrameDescriptorNode& inp
   node.skewOffsetXDegrees = evaluate("skewX", 0.0);
   node.skewOffsetYDegrees = evaluate("skewY", 0.0);
   node.animationCornerRadius = evaluate("cornerRadius", std::numeric_limits<double>::quiet_NaN());
+  node.animationBorderOpacity = evaluate("border.opacity", std::numeric_limits<double>::quiet_NaN());
+  node.animationShadowOpacity = evaluate("shadow.opacity", std::numeric_limits<double>::quiet_NaN());
   return node;
 }
 
@@ -1150,6 +1255,18 @@ std::vector<NativeRenderGraphNode> CompileRenderGraph(const makelab::imgui::Work
     node.cornerRadiusBottomLeft = std::max(0.0, clip.cornerRadiusBottomLeft > 0.0 ? clip.cornerRadiusBottomLeft : animatedRadius);
     node.fillColor = clip.fillEnabled ? clip.fillColor : (frameNode.layer.kind == NativeNodeKind::Background ? "#000000" : "#38BDF8");
     node.fillOpacity = clip.fillEnabled ? clip.fillOpacity : 1.0;
+    node.borderEnabled = clip.borderEnabled;
+    node.borderWidth = std::max(0.0, clip.borderWidth);
+    node.borderColor = clip.borderColor;
+    node.borderOpacity = Clamp01(std::isfinite(frameNode.animationBorderOpacity) ? frameNode.animationBorderOpacity : clip.borderOpacity, 1.0);
+    node.borderPosition = clip.borderPosition;
+    node.shadowEnabled = clip.shadowEnabled;
+    node.shadowX = clip.shadowX;
+    node.shadowY = clip.shadowY;
+    node.shadowBlur = std::max(0.0, clip.shadowBlur);
+    node.shadowSpread = clip.shadowSpread;
+    node.shadowColor = clip.shadowColor;
+    node.shadowOpacity = Clamp01(std::isfinite(frameNode.animationShadowOpacity) ? frameNode.animationShadowOpacity : clip.shadowOpacity, 1.0);
     if (frameNode.layer.kind == NativeNodeKind::Background) {
       node.x = 0.0;
       node.y = 0.0;
@@ -1263,6 +1380,18 @@ class MacMetalRenderFrameExecutor {
     premultipliedDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
     premultipliedDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
     premultipliedPipeline_ = [device_ newRenderPipelineStateWithDescriptor:premultipliedDescriptor error:&error];
+    MTLRenderPipelineDescriptor* shapeDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
+    shapeDescriptor.vertexFunction = [library newFunctionWithName:@"mac_preview_vertex"];
+    shapeDescriptor.fragmentFunction = [library newFunctionWithName:@"mac_preview_shape_fragment"];
+    shapeDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+    shapeDescriptor.colorAttachments[0].blendingEnabled = YES;
+    shapeDescriptor.colorAttachments[0].rgbBlendOperation = MTLBlendOperationAdd;
+    shapeDescriptor.colorAttachments[0].alphaBlendOperation = MTLBlendOperationAdd;
+    shapeDescriptor.colorAttachments[0].sourceRGBBlendFactor = MTLBlendFactorOne;
+    shapeDescriptor.colorAttachments[0].destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+    shapeDescriptor.colorAttachments[0].sourceAlphaBlendFactor = MTLBlendFactorOne;
+    shapeDescriptor.colorAttachments[0].destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+    shapePipeline_ = [device_ newRenderPipelineStateWithDescriptor:shapeDescriptor error:&error];
     MTLRenderPipelineDescriptor* additiveDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
     additiveDescriptor.vertexFunction = [library newFunctionWithName:@"mac_preview_vertex"];
     additiveDescriptor.fragmentFunction = [library newFunctionWithName:@"mac_preview_texture_fragment"];
@@ -1293,7 +1422,7 @@ class MacMetalRenderFrameExecutor {
 
   id<MTLTexture> render(const makelab::imgui::WorkspaceViewState& workspace, double timeSeconds, bool playing) {
     diagnostic_.clear();
-    if (!pipeline_ || !textureCache_) {
+    if (!pipeline_ || !shapePipeline_ || !textureCache_) {
       if (diagnostic_.empty()) {
         diagnostic_ = "MacMetalRenderFrameExecutor blocked: Metal pipeline or CVMetalTextureCache is not ready.";
       }
@@ -1315,7 +1444,7 @@ class MacMetalRenderFrameExecutor {
     const auto graph = CompileRenderGraph(workspace, descriptor);
     const auto fxPassGraph = CompileFXPassGraph(graph);
 
-    std::vector<std::pair<NativeRenderGraphNode, NativeResolvedTexture>> resolvedTextures;
+    std::vector<NativeCompositeNode> resolvedNodes;
     int audioNodeCount = 0;
     for (const auto& node : graph) {
       if (node.frameNode.layer.kind == NativeNodeKind::Audio) {
@@ -1331,7 +1460,7 @@ class MacMetalRenderFrameExecutor {
             NativeResolvedTexture postResolved = applyFXPasses(motionBlurTexture, fullNode, fxPassGraph, commandBuffer, false, true);
             postResolved.texture = postResolved.texture ?: motionBlurTexture;
             postResolved.premultiplied = true;
-            resolvedTextures.emplace_back(fullNode, postResolved);
+            resolvedNodes.push_back({node, fullNode, postResolved});
             continue;
           }
         }
@@ -1341,7 +1470,7 @@ class MacMetalRenderFrameExecutor {
         continue;
       }
       NativeResolvedTexture resolved = applyFXPasses(source, node, fxPassGraph, commandBuffer);
-      resolvedTextures.emplace_back(node, resolved.texture ? resolved : NativeResolvedTexture{source, 1.0, 1.0});
+      resolvedNodes.push_back({node, node, resolved.texture ? resolved : NativeResolvedTexture{source, 1.0, 1.0}});
     }
 
     MTLRenderPassDescriptor* pass = [MTLRenderPassDescriptor renderPassDescriptor];
@@ -1357,15 +1486,17 @@ class MacMetalRenderFrameExecutor {
     [encoder setRenderPipelineState:pipeline_];
 
     int drawnNodeCount = 0;
-    for (const auto& resolved : resolvedTextures) {
-      if (!resolved.second.texture) {
+    for (const auto& composite : resolvedNodes) {
+      if (!composite.resolved.texture) {
         continue;
       }
-      [encoder setRenderPipelineState:(resolved.second.premultiplied && premultipliedPipeline_) ? premultipliedPipeline_ : pipeline_];
-      drawTexture(resolved.second.texture,
-                  scaledNode(resolved.first, resolved.second.boundsScaleX, resolved.second.boundsScaleY),
+      drawDropShadow(composite.styleNode, workspace, encoder);
+      [encoder setRenderPipelineState:(composite.resolved.premultiplied && premultipliedPipeline_) ? premultipliedPipeline_ : pipeline_];
+      drawTexture(composite.resolved.texture,
+                  scaledNode(composite.drawNode, composite.resolved.boundsScaleX, composite.resolved.boundsScaleY),
                   workspace,
                   encoder);
+      drawBorder(composite.styleNode, workspace, encoder);
       drawnNodeCount += 1;
     }
 
@@ -1397,6 +1528,7 @@ class MacMetalRenderFrameExecutor {
   MTKTextureLoader* textureLoader_ = nil;
   id<MTLRenderPipelineState> pipeline_ = nil;
   id<MTLRenderPipelineState> premultipliedPipeline_ = nil;
+  id<MTLRenderPipelineState> shapePipeline_ = nil;
   id<MTLRenderPipelineState> additiveFloatPipeline_ = nil;
   id<MTLComputePipelineState> motionTilePipeline_ = nil;
   id<MTLComputePipelineState> gaussianBlurPipeline_ = nil;
@@ -1508,6 +1640,12 @@ class MacMetalRenderFrameExecutor {
     node.scaleY = 1.0;
     node.skewXDegrees = 0.0;
     node.skewYDegrees = 0.0;
+    node.cornerRadiusTopLeft = 0.0;
+    node.cornerRadiusTopRight = 0.0;
+    node.cornerRadiusBottomRight = 0.0;
+    node.cornerRadiusBottomLeft = 0.0;
+    node.borderEnabled = false;
+    node.shadowEnabled = false;
     return node;
   }
 
@@ -1683,6 +1821,33 @@ class MacMetalRenderFrameExecutor {
     scaled.x = centerX - scaled.width * node.anchorX;
     scaled.y = centerY - scaled.height * node.anchorY;
     return scaled;
+  }
+
+  NativeRenderGraphNode expandedNode(const NativeRenderGraphNode& node, double expansion) const {
+    if (!std::isfinite(expansion) || std::abs(expansion) <= 0.0001) {
+      return node;
+    }
+    NativeRenderGraphNode expanded = node;
+    const double centerX = node.x + node.width * node.anchorX;
+    const double centerY = node.y + node.height * node.anchorY;
+    expanded.width = std::max(1.0, node.width + expansion * 2.0);
+    expanded.height = std::max(1.0, node.height + expansion * 2.0);
+    expanded.x = centerX - expanded.width * node.anchorX;
+    expanded.y = centerY - expanded.height * node.anchorY;
+    expanded.cornerRadiusTopLeft = std::max(0.0, node.cornerRadiusTopLeft + expansion);
+    expanded.cornerRadiusTopRight = std::max(0.0, node.cornerRadiusTopRight + expansion);
+    expanded.cornerRadiusBottomRight = std::max(0.0, node.cornerRadiusBottomRight + expansion);
+    expanded.cornerRadiusBottomLeft = std::max(0.0, node.cornerRadiusBottomLeft + expansion);
+    return expanded;
+  }
+
+  uint32_t shapeKindValue(const NativeRenderGraphNode& node) const {
+    const auto* clip = node.frameNode.layer.clip;
+    if (clip == nullptr || node.frameNode.layer.kind != NativeNodeKind::Shape) return 0;
+    if (clip->shapeKind == "circle" || clip->shapeKind == "ellipse") return 1;
+    if (clip->shapeKind == "line") return 2;
+    if (clip->shapeKind == "arrow") return 3;
+    return 0;
   }
 
   NativeResolvedTexture applyMotionTile(id<MTLTexture> source, const NativeFXPass& pass, id<MTLCommandBuffer> commandBuffer) {
@@ -2110,10 +2275,8 @@ class MacMetalRenderFrameExecutor {
     return texture;
   }
 
-  void drawTexture(id<MTLTexture> texture,
-                   const NativeRenderGraphNode& node,
-                   const makelab::imgui::WorkspaceViewState& workspace,
-                   id<MTLRenderCommandEncoder> encoder) {
+  std::array<MacPreviewVertex, 6> quadVertices(const NativeRenderGraphNode& node,
+                                               const makelab::imgui::WorkspaceViewState& workspace) const {
     const float compWidth = static_cast<float>(std::max(1, workspace.width));
     const float compHeight = static_cast<float>(std::max(1, workspace.height));
     const float w = static_cast<float>(node.width);
@@ -2130,7 +2293,7 @@ class MacMetalRenderFrameExecutor {
     const float skewX = std::tan(skewXRadians);
     const float skewY = std::tan(skewYRadians);
     auto ndc = [&](float px, float py) -> vector_float2 {
-      return vector_float2{ px / compWidth * 2.0f - 1.0f, 1.0f - py / compHeight * 2.0f };
+      return vector_float2{px / compWidth * 2.0f - 1.0f, 1.0f - py / compHeight * 2.0f};
     };
     auto transform = [&](float localX, float localY) -> vector_float2 {
       localX *= static_cast<float>(node.scaleX);
@@ -2145,19 +2308,169 @@ class MacMetalRenderFrameExecutor {
     const float right = w * (1.0f - anchorX);
     const float top = -h * anchorY;
     const float bottom = h * (1.0f - anchorY);
-    MacPreviewVertex vertices[6] = {
-        { transform(left, bottom), vector_float2{0.0f, 1.0f} },
-        { transform(right, bottom), vector_float2{1.0f, 1.0f} },
-        { transform(left, top), vector_float2{0.0f, 0.0f} },
-        { transform(right, bottom), vector_float2{1.0f, 1.0f} },
-        { transform(right, top), vector_float2{1.0f, 0.0f} },
-        { transform(left, top), vector_float2{0.0f, 0.0f} },
+    return {{
+        {transform(left, bottom), vector_float2{0.0f, 1.0f}},
+        {transform(right, bottom), vector_float2{1.0f, 1.0f}},
+        {transform(left, top), vector_float2{0.0f, 0.0f}},
+        {transform(right, bottom), vector_float2{1.0f, 1.0f}},
+        {transform(right, top), vector_float2{1.0f, 0.0f}},
+        {transform(left, top), vector_float2{0.0f, 0.0f}},
+    }};
+  }
+
+  vector_float4 cornerRadii(const NativeRenderGraphNode& node) const {
+    return vector_float4{
+        static_cast<float>(std::max(0.0, node.cornerRadiusTopLeft)),
+        static_cast<float>(std::max(0.0, node.cornerRadiusTopRight)),
+        static_cast<float>(std::max(0.0, node.cornerRadiusBottomRight)),
+        static_cast<float>(std::max(0.0, node.cornerRadiusBottomLeft)),
     };
-    MacPreviewUniforms uniforms{ vector_float4{1.0f, 1.0f, 1.0f, 1.0f}, static_cast<float>(std::clamp(node.opacity, 0.0, 1.0)) };
-    [encoder setVertexBytes:vertices length:sizeof(vertices) atIndex:0];
+  }
+
+  id<MTLTexture> shadowTexture(const NativeRenderGraphNode& node) {
+    if (!node.shadowEnabled || node.shadowOpacity <= 0.0) {
+      return nil;
+    }
+    const double spread = std::max(0.0, node.shadowSpread);
+    const double pad = std::max(1.0, std::ceil(node.shadowBlur * 2.0));
+    const int width = std::max(1, static_cast<int>(std::ceil(node.width + (pad + spread) * 2.0)));
+    const int height = std::max(1, static_cast<int>(std::ceil(node.height + (pad + spread) * 2.0)));
+    const auto* clip = node.frameNode.layer.clip;
+    const std::string clipId = clip != nullptr ? clip->id : "background";
+    const std::string key = "shadow|" + clipId + "|" + std::to_string(width) + "x" + std::to_string(height) + "|" +
+                            std::to_string(node.cornerRadiusTopLeft) + "|" + std::to_string(node.cornerRadiusTopRight) + "|" +
+                            std::to_string(node.cornerRadiusBottomRight) + "|" + std::to_string(node.cornerRadiusBottomLeft) + "|" +
+                            std::to_string(node.shadowBlur) + "|" + std::to_string(spread) + "|" + node.shadowColor;
+    auto cached = generatedTextures_.find(key);
+    if (cached != generatedTextures_.end()) {
+      return cached->second;
+    }
+
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef context = CGBitmapContextCreate(nullptr, width, height, 8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(colorSpace);
+    if (context == nullptr) {
+      return nil;
+    }
+    CGContextClearRect(context, CGRectMake(0, 0, width, height));
+    const CGFloat casterOffset = static_cast<CGFloat>(width * 2);
+    const CGRect rect = CGRectMake(pad - casterOffset,
+                                   pad,
+                                   std::max(1.0, node.width + spread * 2.0),
+                                   std::max(1.0, node.height + spread * 2.0));
+    CGContextSetShadowWithColor(context,
+                                CGSizeMake(casterOffset, 0.0),
+                                static_cast<CGFloat>(node.shadowBlur),
+                                NSColorFromHex(node.shadowColor, 1.0).CGColor);
+    CGContextSetFillColorWithColor(context, NSColor.blackColor.CGColor);
+    const uint32_t shapeKind = shapeKindValue(node);
+    if (shapeKind == 1) {
+      CGContextFillEllipseInRect(context, rect);
+    } else if (shapeKind == 2) {
+      CGContextSetLineWidth(context, std::max(2.0, node.height + spread * 2.0));
+      CGContextMoveToPoint(context, CGRectGetMinX(rect), CGRectGetMidY(rect));
+      CGContextAddLineToPoint(context, CGRectGetMaxX(rect), CGRectGetMidY(rect));
+      CGContextStrokePath(context);
+    } else if (shapeKind == 3) {
+      CGContextBeginPath(context);
+      CGContextMoveToPoint(context, CGRectGetMinX(rect), CGRectGetMidY(rect));
+      CGContextAddLineToPoint(context, CGRectGetMaxX(rect), CGRectGetMidY(rect));
+      CGContextAddLineToPoint(context, CGRectGetMaxX(rect) - std::min<CGFloat>(rect.size.width * 0.22, 42.0),
+                              CGRectGetMidY(rect) + std::min<CGFloat>(rect.size.height * 0.42, 32.0));
+      CGContextMoveToPoint(context, CGRectGetMaxX(rect), CGRectGetMidY(rect));
+      CGContextAddLineToPoint(context, CGRectGetMaxX(rect) - std::min<CGFloat>(rect.size.width * 0.22, 42.0),
+                              CGRectGetMidY(rect) - std::min<CGFloat>(rect.size.height * 0.42, 32.0));
+      CGContextSetLineWidth(context, std::max(2.0, node.height * 0.25 + spread));
+      CGContextStrokePath(context);
+    } else {
+      CGPathRef path = CreateRoundedRectPath(rect,
+                                            node.cornerRadiusTopLeft + spread,
+                                            node.cornerRadiusTopRight + spread,
+                                            node.cornerRadiusBottomRight + spread,
+                                            node.cornerRadiusBottomLeft + spread);
+      CGContextAddPath(context, path);
+      CGContextFillPath(context);
+      CGPathRelease(path);
+    }
+    CGImageRef image = CGBitmapContextCreateImage(context);
+    CGContextRelease(context);
+    id<MTLTexture> texture = textureFromCGImage(image, key);
+    if (image != nullptr) {
+      CGImageRelease(image);
+    }
+    return texture;
+  }
+
+  void drawDropShadow(const NativeRenderGraphNode& node,
+                      const makelab::imgui::WorkspaceViewState& workspace,
+                      id<MTLRenderCommandEncoder> encoder) {
+    if (!node.shadowEnabled || node.shadowOpacity <= 0.0 || !premultipliedPipeline_) {
+      return;
+    }
+    id<MTLTexture> texture = shadowTexture(node);
+    if (!texture) {
+      return;
+    }
+    const double spread = std::max(0.0, node.shadowSpread);
+    const double pad = std::max(1.0, std::ceil(node.shadowBlur * 2.0));
+    NativeRenderGraphNode shadowNode = expandedNode(node, pad + spread);
+    shadowNode.x += node.shadowX;
+    shadowNode.y += node.shadowY;
+    shadowNode.opacity = std::clamp(node.opacity * node.shadowOpacity, 0.0, 1.0);
+    shadowNode.cornerRadiusTopLeft = 0.0;
+    shadowNode.cornerRadiusTopRight = 0.0;
+    shadowNode.cornerRadiusBottomRight = 0.0;
+    shadowNode.cornerRadiusBottomLeft = 0.0;
+    shadowNode.borderEnabled = false;
+    shadowNode.shadowEnabled = false;
+    [encoder setRenderPipelineState:premultipliedPipeline_];
+    drawTexture(texture, shadowNode, workspace, encoder);
+  }
+
+  void drawBorder(const NativeRenderGraphNode& node,
+                  const makelab::imgui::WorkspaceViewState& workspace,
+                  id<MTLRenderCommandEncoder> encoder) {
+    if (!node.borderEnabled || node.borderWidth <= 0.0 || node.borderOpacity <= 0.0 || !shapePipeline_) {
+      return;
+    }
+    const double expansion = node.borderPosition == "outside"
+                                 ? node.borderWidth
+                                 : (node.borderPosition == "center" ? node.borderWidth * 0.5 : 0.0);
+    NativeRenderGraphNode borderNode = expandedNode(node, expansion);
+    const auto vertices = quadVertices(borderNode, workspace);
+    MacPreviewUniforms uniforms{
+        HexColor(node.borderColor, static_cast<float>(node.borderOpacity)),
+        cornerRadii(borderNode),
+        vector_float2{static_cast<float>(borderNode.width), static_cast<float>(borderNode.height)},
+        static_cast<float>(std::clamp(node.opacity, 0.0, 1.0)),
+        static_cast<float>(node.borderWidth),
+        1,
+        shapeKindValue(node),
+    };
+    [encoder setRenderPipelineState:shapePipeline_];
+    [encoder setVertexBytes:vertices.data() length:sizeof(MacPreviewVertex) * vertices.size() atIndex:0];
+    [encoder setFragmentBytes:&uniforms length:sizeof(uniforms) atIndex:0];
+    [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:vertices.size()];
+  }
+
+  void drawTexture(id<MTLTexture> texture,
+                   const NativeRenderGraphNode& node,
+                   const makelab::imgui::WorkspaceViewState& workspace,
+                   id<MTLRenderCommandEncoder> encoder) {
+    const auto vertices = quadVertices(node, workspace);
+    MacPreviewUniforms uniforms{
+        vector_float4{1.0f, 1.0f, 1.0f, 1.0f},
+        cornerRadii(node),
+        vector_float2{static_cast<float>(node.width), static_cast<float>(node.height)},
+        static_cast<float>(std::clamp(node.opacity, 0.0, 1.0)),
+        0.0f,
+        0,
+        0,
+    };
+    [encoder setVertexBytes:vertices.data() length:sizeof(MacPreviewVertex) * vertices.size() atIndex:0];
     [encoder setFragmentTexture:texture atIndex:0];
     [encoder setFragmentBytes:&uniforms length:sizeof(uniforms) atIndex:0];
-    [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
+    [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:vertices.size()];
   }
 
 };
@@ -2362,6 +2675,20 @@ makelab::imgui::WorkspaceViewState LoadWorkspaceState(NSURL* folder) {
       nextClip.fillEnabled = BoolValue(fill, @"enabled", HasObjectEntries(fill));
       nextClip.fillColor = OptionalStringValue(fill, @"color", "#FFFFFF");
       nextClip.fillOpacity = DoubleValue(fill, @"opacity", 1.0);
+      NSDictionary* border = DictionaryValue(style, @"border");
+      nextClip.borderEnabled = BoolValue(border, @"enabled", HasObjectEntries(border));
+      nextClip.borderWidth = DoubleValue(border, @"width", 0.0);
+      nextClip.borderColor = OptionalStringValue(border, @"color", "#FFFFFF");
+      nextClip.borderOpacity = DoubleValue(border, @"opacity", 1.0);
+      nextClip.borderPosition = OptionalStringValue(border, @"position", OptionalStringValue(border, @"align", "inside"));
+      NSDictionary* shadow = DictionaryValue(style, @"shadow");
+      nextClip.shadowEnabled = BoolValue(shadow, @"enabled", HasObjectEntries(shadow));
+      nextClip.shadowX = DoubleValue(shadow, @"offsetX", DoubleValue(shadow, @"x", 0.0));
+      nextClip.shadowY = DoubleValue(shadow, @"offsetY", DoubleValue(shadow, @"y", 0.0));
+      nextClip.shadowBlur = DoubleValue(shadow, @"blur", DoubleValue(shadow, @"radius", 0.0));
+      nextClip.shadowSpread = DoubleValue(shadow, @"spread", 0.0);
+      nextClip.shadowColor = OptionalStringValue(shadow, @"color", "#000000");
+      nextClip.shadowOpacity = DoubleValue(shadow, @"opacity", 1.0);
       nextClip.hasEffects = HasObjectEntries(DictionaryValue(style, @"effects"));
       NSDictionary* text = DictionaryValue(clip, @"text");
       nextClip.textContent = OptionalStringValue(text, @"content", nextClip.name.empty() ? "Text" : nextClip.name);

@@ -29,6 +29,9 @@ transformMotionBlur uses adaptive temporal transform samples.
 Large rotation blur uses up to 64 paused-preview samples and 24 playback samples.
 Transform motion blur reuses the accepted source texture across temporal samples.
 The corrected smooth spiral transform-motion-blur result is included.
+FrameDescriptor rounded corners clip shape, image, video, and other visual layer textures in Metal.
+RenderGraph border composite executes after the layer texture.
+RenderGraph drop shadow composite executes before the layer texture.
 Objective-C++ ARC is enabled.
 Video texture cache is bounded.
 Idle rendering is event-driven and measured at approximately 0% CPU.
