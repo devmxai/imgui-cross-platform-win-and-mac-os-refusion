@@ -2,6 +2,11 @@
 
 Independent native C++ / Dear ImGui desktop editor repository.
 
+The `main` branch is the latest complete portable source state. Cloning `main`
+restores the current Dear ImGui application, the authoritative HyperFrame Core
+contracts, the macOS native execution reference, Windows continuation
+contracts, and the governing architecture documents.
+
 Current validated platform:
 
 ```text
@@ -76,6 +81,28 @@ Objective-C++ ARC memory management
 
 See [Current macOS Status](docs/CURRENT_MACOS_STATUS.md) for validation details and remaining work.
 
+## Portable Complete Source
+
+The repository preserves the current accepted source path:
+
+```text
+Gates
+-> HyperFrame IR
+-> FrameDescriptor
+-> RenderGraph
+-> FXPassGraph
+-> platform render executor
+-> FinalFrameSurface
+-> Dear ImGui display
+```
+
+The active ImGui application and the portable engine contracts are verified
+together. A missing required file, broken Core-relative import, invalid FX
+manifest, or excluded legacy UI path fails `npm run verify`.
+
+See [Portable Source Manifest](docs/PORTABLE_SOURCE_MANIFEST.md) for the exact
+included and excluded boundaries.
+
 ## Build
 
 Requirements:
@@ -117,7 +144,16 @@ npm run verify
 - [IMGUI Professional Architecture Plan](docs/architecture/imgui-professional-plan.md)
 - [Professional HyperFrame FX Development Standard](docs/Professional%20HyperFrame%20FX%20Development%20Standard.md)
 - [Current macOS Status](docs/CURRENT_MACOS_STATUS.md)
+- [Portable Source Manifest](docs/PORTABLE_SOURCE_MANIFEST.md)
 
 ## Repository Boundary
 
-This repository is independent. It contains the native ImGui desktop application and its governing documentation only. It does not inherit the Git history, remotes, web UI, Qt UI, or Flutter implementation from any previous repository.
+This repository is independent. It contains the native ImGui desktop
+application, the complete current HyperFrame source path required by that
+application, platform execution references/contracts, and governing
+documentation. It does not inherit the Git history, remotes, web UI, Qt UI,
+Flutter UI, or legacy SwiftUI shell from any previous repository.
+
+Generated builds, `node_modules`, media projects, and user assets are not
+committed. Windows contracts are present for continuing the same architecture,
+but a complete Windows Direct3D executable remains future work.

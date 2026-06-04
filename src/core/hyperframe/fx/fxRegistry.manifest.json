@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "owner": "src/core/hyperframe",
+  "policy": "Platforms may mirror these definitions for native execution, but they may not introduce FX canonical names, aliases, or schema parameters outside this manifest.",
+  "effects": {
+    "motionBlur": {
+      "kind": "motion-fx",
+      "canonicalKind": "transformMotionBlur",
+      "aliases": ["transformMotionBlur", "directionalMotionBlur"],
+      "parameters": ["enabled", "algorithm", "strength", "samples", "shutter", "shutterAngle", "shutterPhase", "sampleCurve", "blur", "opacity", "edgeMode", "quality", "mode", "amount", "activeRange", "activeFrom", "activeTo"]
+    },
+    "motionTrail": {
+      "kind": "motion-fx",
+      "canonicalKind": "motionTrail",
+      "aliases": [],
+      "parameters": ["enabled", "algorithm", "strength", "samples", "shutter", "shutterAngle", "shutterPhase", "sampleCurve", "blur", "opacity", "edgeMode", "quality"]
+    },
+    "motionTile": {
+      "kind": "motion-fx",
+      "canonicalKind": "motionTile",
+      "aliases": ["tile", "mirrorTile", "edgeRepeat"],
+      "parameters": ["enabled", "mode", "expansion", "expansionX", "expansionY", "outputWidth", "outputHeight", "mirrorEdges", "strength", "samples", "spacing", "opacity", "quality"]
+    },
+    "gaussianBlur": {
+      "kind": "motion-fx",
+      "canonicalKind": "gaussianBlur",
+      "aliases": ["blur"],
+      "parameters": ["enabled", "radius", "blur", "quality"]
+    },
+    "radialBlur": {
+      "kind": "motion-fx",
+      "canonicalKind": "radialBlur",
+      "aliases": ["radialMotionBlur", "spinBlur", "swirlBlur"],
+      "parameters": ["enabled", "center", "centerX", "centerY", "mode", "angleSpread", "angleDegrees", "samples", "decay", "opacity", "quality", "amount", "strength", "intensity", "originX", "originY", "pivotX", "pivotY", "spinDegrees", "rotationDegrees", "angle", "zoomSpread", "radialSpread", "sampleCurve", "activeRange", "activeFrom", "activeTo"]
+    },
+    "zoomBlur": {
+      "kind": "motion-fx",
+      "canonicalKind": "zoomBlur",
+      "aliases": [],
+      "parameters": ["enabled", "center", "zoomSpread", "samples", "decay", "opacity", "chromaticFringe", "quality"]
+    },
+    "spiralEchoBlur": {
+      "kind": "motion-fx",
+      "canonicalKind": "spiralEchoBlur",
+      "aliases": ["spiralBlur"],
+      "parameters": ["enabled", "center", "angleSpread", "zoomSpread", "radialSpread", "samples", "decay", "shutter", "opacity", "blendMode", "chromaticFringe", "quality", "radius", "twist", "rings", "echoOpacity", "vortexSmear"]
+    },
+    "glowStreak": {
+      "kind": "motion-fx",
+      "canonicalKind": "glowStreak",
+      "aliases": [],
+      "parameters": ["enabled", "angle", "distance", "samples", "decay", "opacity", "threshold", "quality"]
+    },
+    "chromaticSplit": {
+      "kind": "motion-fx",
+      "canonicalKind": "chromaticSplit",
+      "aliases": [],
+      "parameters": ["enabled", "amount", "angle", "opacity", "quality"]
+    },
+    "shaderTransition": {
+      "kind": "motion-fx",
+      "canonicalKind": "shaderTransition",
+      "aliases": [],
+      "parameters": ["enabled", "shader", "progress", "duration", "opacity", "chromaticFringe", "quality"]
+    },
+    "glow": {
+      "kind": "style-primitive",
+      "canonicalKind": "glow",
+      "aliases": ["outerGlow", "bloom"],
+      "parameters": ["enabled", "radius", "intensity", "threshold", "color", "blur", "opacity", "spread"]
+    },
+    "colorCorrection": {
+      "kind": "style-primitive",
+      "canonicalKind": "colorCorrection",
+      "aliases": ["colorAdjust", "colorGrade"],
+      "parameters": ["enabled", "brightness", "contrast", "saturation", "temperature", "exposure", "hue", "grayscale", "sepia", "invert"]
+    },
+    "clipToRoundedBounds": {
+      "kind": "style-primitive",
+      "canonicalKind": "clipToRoundedBounds",
+      "aliases": ["roundedMask", "cornerMask"],
+      "parameters": ["enabled", "radius", "topLeft", "topRight", "bottomRight", "bottomLeft"]
+    },
+    "borderComposite": {
+      "kind": "style-primitive",
+      "canonicalKind": "borderComposite",
+      "aliases": ["border", "stroke"],
+      "parameters": ["enabled", "width", "color", "opacity", "position"]
+    },
+    "dropShadow": {
+      "kind": "style-primitive",
+      "canonicalKind": "dropShadow",
+      "aliases": ["shadow"],
+      "parameters": ["enabled", "offsetX", "offsetY", "x", "y", "blur", "spread", "color", "opacity"]
+    }
+  }
+}

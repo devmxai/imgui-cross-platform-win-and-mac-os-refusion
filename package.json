@@ -2,8 +2,11 @@
   "name": "imgui-cross-platform-win-and-mac-os-refusion",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Independent native Dear ImGui editor for macOS and Windows.",
   "scripts": {
-    "verify": "node scripts/platform/verify-imgui-professional-shell.mjs"
+    "verify:imgui": "node scripts/platform/verify-imgui-professional-shell.mjs",
+    "verify:portable": "node scripts/engine/verify-portable-source.mjs",
+    "verify": "npm run verify:imgui && npm run verify:portable"
   }
 }

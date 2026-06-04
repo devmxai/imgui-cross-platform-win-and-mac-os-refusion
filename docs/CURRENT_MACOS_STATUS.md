@@ -2,7 +2,13 @@
 
 Status date: 2026-06-04.
 
-Checkpoint tag:
+Portable source branch:
+
+```text
+main
+```
+
+Initial checkpoint tag:
 
 ```text
 macos-working-v0.1.0
@@ -21,9 +27,12 @@ motionTile executes as a pre-transform Metal pass.
 gaussianBlur executes as a native Metal pass.
 transformMotionBlur uses adaptive temporal transform samples.
 Large rotation blur uses up to 64 paused-preview samples and 24 playback samples.
+Transform motion blur reuses the accepted source texture across temporal samples.
+The corrected smooth spiral transform-motion-blur result is included.
 Objective-C++ ARC is enabled.
 Video texture cache is bounded.
 Idle rendering is event-driven and measured at approximately 0% CPU.
+The complete current source path from Gates through FinalFrameSurface and ImGui is preserved on main.
 ```
 
 ## Verification
@@ -35,6 +44,9 @@ cmake -S apps/imgui -B apps/imgui/build
 cmake --build apps/imgui/build
 npm run verify
 ```
+
+`npm run verify` checks the ImGui architecture, portable source manifest,
+HyperFrame Core-relative imports, and FX registry manifest.
 
 ## Remaining Work
 
