@@ -1,0 +1,104 @@
+{
+  "agentContract": {
+    "effectPath": "clip.style.effects.<effectName>",
+    "sourceOfTruth": [
+      "composition.json",
+      "timeline.json",
+      "assets/assets.json"
+    ],
+    "summary": "Deterministic native SVG asset fixture for FinalFrameSurface parity and timing.",
+    "version": 1
+  },
+  "durationFrames": 30,
+  "durationSeconds": 1,
+  "fps": 30,
+  "timebase": {
+    "animationTimeOrigin": "clip-start",
+    "clipDurationMode": "frames",
+    "clipStartTimeMode": "absolute-timeline-frames",
+    "fps": 30,
+    "keyframeTimeMode": "clip-local-seconds",
+    "timelineTimeUnit": "frames",
+    "rate": {
+      "numerator": 30,
+      "denominator": 1
+    }
+  },
+  "tracks": [
+    {
+      "id": "track_svg",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "image",
+      "name": "SVG Badge",
+      "clips": [
+        {
+          "id": "clip_svg_badge",
+          "name": "SVG Badge",
+          "assetId": "asset_svg_badge",
+          "startFrame": 0,
+          "durationFrames": 30,
+          "trackId": "track_svg",
+          "trimInFrame": 0,
+          "type": "image",
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#FFFFFF",
+              "enabled": true,
+              "opacity": 0.85,
+              "position": "inside",
+              "width": 3
+            },
+            "cornerRadius": 24,
+            "effects": {},
+            "height": 160,
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 18,
+              "color": "#000000",
+              "enabled": true,
+              "opacity": 0.35,
+              "spread": 0,
+              "x": 0,
+              "y": 10
+            },
+            "width": 160,
+            "x": 240,
+            "y": 100
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_background",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "background",
+      "name": "Background",
+      "clips": [
+        {
+          "id": "clip_background",
+          "name": "Background",
+          "startFrame": 0,
+          "durationFrames": 30,
+          "trackId": "track_background",
+          "trimInFrame": 0,
+          "type": "background",
+          "style": {
+            "fill": {
+              "color": "#061014",
+              "enabled": true,
+              "opacity": 1
+            },
+            "opacity": 1
+          }
+        }
+      ]
+    }
+  ]
+}

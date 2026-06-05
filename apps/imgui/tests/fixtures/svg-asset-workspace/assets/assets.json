@@ -1,0 +1,15 @@
+{
+  "assets": [
+    {
+      "id": "asset_svg_badge",
+      "name": "SVG Badge",
+      "type": "image",
+      "path": "assets/originals/svg_badge.svg",
+      "width": 128,
+      "height": 128,
+      "durationSeconds": 0
+    }
+  ],
+  "updatedAt": "2026-06-05T00:00:00Z",
+  "version": 1
+}

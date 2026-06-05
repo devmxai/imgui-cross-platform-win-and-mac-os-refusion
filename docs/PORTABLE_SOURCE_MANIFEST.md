@@ -25,12 +25,34 @@ apps/imgui/
   Current Dear ImGui native application.
   Contains the latest macOS Metal execution and UI state reached in development.
   Pins Dear ImGui to the exact dependency commit used by the validated build.
+  Vendors the exact Font Awesome Free 7.2.0 Solid icon font and license used by
+  the shared native editor shell.
+  Contains the shared C++ ProjectAuthoringService, its focused tests, candidate
+  project validation, and atomic accepted-project writes used by native adapters.
+  Contains the shared C++ FrameQueryService for evaluated queryFrame,
+  queryLayerAtPixel, deterministic FrameTruthFingerprint parity checks, and
+  pixel-true viewport/composition transforms used by agent-visible truth.
+  The macOS adapter includes a native FSEventStream workspace watcher and
+  accepted-state refresh command. Windows must provide the equivalent watcher
+  behind the same project refresh boundary.
+  The macOS Open Folder picker is presented asynchronously; selecting a folder
+  triggers project ingestion after the native picker returns.
+  The macOS app displays native performance telemetry from the platform bridge:
+  render submit time, Live Scope readback time, frame budget, FinalFrameSurface
+  memory size, requested frame, accepted frame, and request generation.
+  It also exposes headless pixel parity and performance smoke modes so CI/local
+  verification can prove preview/export pixel identity and native render timing
+  without giving the UI any render, clock, or media authority.
+  Portable pixel-parity and heavy-FX fixtures are included under
+  apps/imgui/tests/fixtures so the current render path can be validated after a
+  fresh clone without depending on user media projects.
 
 src/core/hyperframe/
   Shared engine contracts and algorithms:
   project types, transaction gate, IR, FrameDescriptor, FX registry,
   effect normalizer, FXPassGraph, quality policy, render planning,
   FinalFrameSurface request contract, and timeline operation contracts.
+  SVG assets are source textures only: pinned LunaSVG rasterizes SVG into a native GPU texture before RenderGraph/FXPassGraph, with no UI or preview fallback ownership.
 
 engine/platform/macos-reference/
   Reference native macOS engine execution sources:

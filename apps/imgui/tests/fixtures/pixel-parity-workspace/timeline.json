@@ -1,0 +1,195 @@
+{
+  "agentContract": {
+    "effectPath": "clip.style.effects.<effectName>",
+    "sourceOfTruth": [
+      "composition.json",
+      "timeline.json",
+      "assets/assets.json"
+    ],
+    "summary": "Deterministic native pixel parity fixture.",
+    "version": 1
+  },
+  "durationFrames": 60,
+  "durationSeconds": 2,
+  "fps": 30,
+  "timebase": {
+    "animationTimeOrigin": "clip-start",
+    "clipDurationMode": "frames",
+    "clipStartTimeMode": "absolute-timeline-frames",
+    "fps": 30,
+    "keyframeTimeMode": "clip-local-seconds",
+    "timelineTimeUnit": "frames",
+    "rate": {
+      "numerator": 30,
+      "denominator": 1
+    }
+  },
+  "tracks": [
+    {
+      "id": "track_text",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "text",
+      "name": "Title",
+      "clips": [
+        {
+          "id": "clip_title",
+          "name": "Title",
+          "startFrame": 0,
+          "durationFrames": 60,
+          "trackId": "track_text",
+          "trimInFrame": 0,
+          "type": "text",
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#FFFFFF",
+              "enabled": false,
+              "opacity": 1,
+              "position": "inside",
+              "width": 0
+            },
+            "cornerRadius": 0,
+            "effects": {},
+            "fill": {
+              "color": "#FFFFFF",
+              "enabled": false,
+              "opacity": 0
+            },
+            "height": 72,
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 10,
+              "color": "#000000",
+              "enabled": true,
+              "opacity": 0.32,
+              "spread": 0,
+              "x": 0,
+              "y": 5
+            },
+            "width": 280,
+            "x": 180,
+            "y": 208
+          },
+          "text": {
+            "align": "center",
+            "color": "#FFFFFF",
+            "content": "Parity",
+            "fontFamily": "Inter",
+            "fontSize": 54,
+            "fontWeight": "700",
+            "letterSpacing": 0,
+            "lineHeight": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_shape",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "shape",
+      "name": "Shape",
+      "clips": [
+        {
+          "id": "clip_card",
+          "name": "Rounded Card",
+          "startFrame": 0,
+          "durationFrames": 60,
+          "trackId": "track_shape",
+          "trimInFrame": 0,
+          "type": "shape",
+          "shape": {
+            "kind": "rectangle"
+          },
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#BFE8FF",
+              "enabled": true,
+              "opacity": 0.8,
+              "position": "inside",
+              "width": 4
+            },
+            "cornerRadius": 36,
+            "effects": {
+              "softBlur": {
+                "enabled": true,
+                "kind": "gaussianBlur",
+                "radius": 0.8,
+                "source": "gaussianBlur"
+              }
+            },
+            "fill": {
+              "color": "#2D6CDF",
+              "enabled": true,
+              "opacity": 0.96
+            },
+            "height": 168,
+            "keyframes": {
+              "rotation": [
+                {
+                  "time": 0,
+                  "value": -4,
+                  "easing": "linear"
+                },
+                {
+                  "time": 1,
+                  "value": 4,
+                  "easing": "linear"
+                }
+              ]
+            },
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 18,
+              "color": "#000000",
+              "enabled": true,
+              "opacity": 0.42,
+              "spread": 0,
+              "x": 8,
+              "y": 10
+            },
+            "width": 300,
+            "x": 170,
+            "y": 96
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_background",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "background",
+      "name": "Background",
+      "clips": [
+        {
+          "id": "clip_background",
+          "name": "Background",
+          "startFrame": 0,
+          "durationFrames": 60,
+          "trackId": "track_background",
+          "trimInFrame": 0,
+          "type": "background",
+          "style": {
+            "fill": {
+              "color": "#061014",
+              "enabled": true,
+              "opacity": 1
+            },
+            "opacity": 1
+          }
+        }
+      ]
+    }
+  ]
+}

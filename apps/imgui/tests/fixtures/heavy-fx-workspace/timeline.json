@@ -1,0 +1,392 @@
+{
+  "agentContract": {
+    "effectPath": "clip.style.effects.<effectName>",
+    "sourceOfTruth": [
+      "composition.json",
+      "timeline.json",
+      "assets/assets.json"
+    ],
+    "summary": "Deterministic native heavy FX fixture for FinalFrameSurface parity and timing.",
+    "version": 1
+  },
+  "durationFrames": 90,
+  "durationSeconds": 3,
+  "fps": 30,
+  "timebase": {
+    "animationTimeOrigin": "clip-start",
+    "clipDurationMode": "frames",
+    "clipStartTimeMode": "absolute-timeline-frames",
+    "fps": 30,
+    "keyframeTimeMode": "clip-local-seconds",
+    "timelineTimeUnit": "frames",
+    "rate": {
+      "numerator": 30,
+      "denominator": 1
+    }
+  },
+  "tracks": [
+    {
+      "id": "track_title",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "text",
+      "name": "Title",
+      "clips": [
+        {
+          "id": "clip_title_heavy",
+          "name": "Native Truth",
+          "startFrame": 8,
+          "durationFrames": 62,
+          "trackId": "track_title",
+          "trimInFrame": 0,
+          "type": "text",
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#FFFFFF",
+              "enabled": false,
+              "opacity": 1,
+              "position": "inside",
+              "width": 0
+            },
+            "cornerRadius": 0,
+            "effects": {
+              "gaussianBlur": {
+                "enabled": true,
+                "radius": 0.35
+              }
+            },
+            "fill": {
+              "color": "#FFFFFF",
+              "enabled": false,
+              "opacity": 0
+            },
+            "height": 94,
+            "keyframes": {
+              "opacity": [
+                {
+                  "time": 0,
+                  "value": 0,
+                  "easing": "easeOut"
+                },
+                {
+                  "time": 0.35,
+                  "value": 1,
+                  "easing": "easeOut"
+                },
+                {
+                  "time": 1.8,
+                  "value": 1,
+                  "easing": "linear"
+                }
+              ],
+              "translateY": [
+                {
+                  "time": 0,
+                  "value": 42,
+                  "easing": "easeOut"
+                },
+                {
+                  "time": 0.7,
+                  "value": 0,
+                  "easing": "easeOutBack"
+                }
+              ]
+            },
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 24,
+              "color": "#000000",
+              "enabled": true,
+              "opacity": 0.62,
+              "spread": 0,
+              "x": 0,
+              "y": 10
+            },
+            "width": 540,
+            "x": 90,
+            "y": 184
+          },
+          "text": {
+            "align": "center",
+            "color": "#FFFFFF",
+            "content": "FinalFrameSurface",
+            "fontFamily": "Inter",
+            "fontSize": 54,
+            "fontWeight": "700",
+            "letterSpacing": 0,
+            "lineHeight": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_orb",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "shape",
+      "name": "Motion Blur Orb",
+      "clips": [
+        {
+          "id": "clip_motion_orb",
+          "name": "Motion Blur Orb",
+          "startFrame": 0,
+          "durationFrames": 90,
+          "trackId": "track_orb",
+          "trimInFrame": 0,
+          "type": "shape",
+          "shape": {
+            "kind": "circle"
+          },
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#B6F4FF",
+              "enabled": true,
+              "opacity": 0.92,
+              "position": "inside",
+              "width": 5
+            },
+            "cornerRadius": 180,
+            "effects": {
+              "motionTile": {
+                "enabled": true,
+                "mode": "mirror",
+                "expansionX": 1.28,
+                "expansionY": 1.28
+              },
+              "motionBlur": {
+                "amount": 1.0,
+                "enabled": true,
+                "quality": "preview",
+                "sampleCurve": "filmic",
+                "samples": 24,
+                "shutterAngle": 240,
+                "shutterPhase": -120
+              },
+              "gaussianBlur": {
+                "enabled": true,
+                "radius": 0.45
+              }
+            },
+            "fill": {
+              "color": "#30D7C9",
+              "enabled": true,
+              "opacity": 0.9
+            },
+            "height": 210,
+            "keyframes": {
+              "centerX": [
+                {
+                  "time": 0,
+                  "value": 164,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 1.45,
+                  "value": 556,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 2.85,
+                  "value": 164,
+                  "easing": "easeInOut"
+                }
+              ],
+              "centerY": [
+                {
+                  "time": 0,
+                  "value": 826,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 1.45,
+                  "value": 624,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 2.85,
+                  "value": 826,
+                  "easing": "easeInOut"
+                }
+              ],
+              "rotation": [
+                {
+                  "time": 0,
+                  "value": -32,
+                  "easing": "linear"
+                },
+                {
+                  "time": 1.5,
+                  "value": 188,
+                  "easing": "linear"
+                },
+                {
+                  "time": 3,
+                  "value": 392,
+                  "easing": "linear"
+                }
+              ],
+              "scale": [
+                {
+                  "time": 0,
+                  "value": 0.78,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 1.5,
+                  "value": 1.18,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 3,
+                  "value": 0.78,
+                  "easing": "easeInOut"
+                }
+              ]
+            },
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 34,
+              "color": "#001B22",
+              "enabled": true,
+              "opacity": 0.52,
+              "spread": 4,
+              "x": 0,
+              "y": 18
+            },
+            "width": 210,
+            "x": 59,
+            "y": 721
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_card",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "shape",
+      "name": "Rounded Card",
+      "clips": [
+        {
+          "id": "clip_rounded_card",
+          "name": "Rounded Card",
+          "startFrame": 0,
+          "durationFrames": 90,
+          "trackId": "track_card",
+          "trimInFrame": 0,
+          "type": "shape",
+          "shape": {
+            "kind": "rectangle"
+          },
+          "style": {
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "border": {
+              "color": "#81F0D6",
+              "enabled": true,
+              "opacity": 0.74,
+              "position": "inside",
+              "width": 4
+            },
+            "cornerRadius": 44,
+            "effects": {
+              "gaussianBlur": {
+                "enabled": true,
+                "radius": 0.55
+              }
+            },
+            "fill": {
+              "color": "#102A34",
+              "enabled": true,
+              "opacity": 0.86
+            },
+            "height": 360,
+            "keyframes": {
+              "cornerRadius": [
+                {
+                  "time": 0,
+                  "value": 24,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 1.5,
+                  "value": 64,
+                  "easing": "easeInOut"
+                },
+                {
+                  "time": 3,
+                  "value": 24,
+                  "easing": "easeInOut"
+                }
+              ],
+              "rotation": [
+                {
+                  "time": 0,
+                  "value": -3,
+                  "easing": "linear"
+                },
+                {
+                  "time": 3,
+                  "value": 3,
+                  "easing": "linear"
+                }
+              ]
+            },
+            "opacity": 1,
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "shadow": {
+              "blur": 42,
+              "color": "#000000",
+              "enabled": true,
+              "opacity": 0.48,
+              "spread": 0,
+              "x": 0,
+              "y": 28
+            },
+            "width": 560,
+            "x": 80,
+            "y": 454
+          }
+        }
+      ]
+    },
+    {
+      "id": "track_background",
+      "isHidden": false,
+      "isMuted": false,
+      "kind": "background",
+      "name": "Background",
+      "clips": [
+        {
+          "id": "clip_background_heavy",
+          "name": "Background",
+          "startFrame": 0,
+          "durationFrames": 90,
+          "trackId": "track_background",
+          "trimInFrame": 0,
+          "type": "background",
+          "style": {
+            "fill": {
+              "color": "#061014",
+              "enabled": true,
+              "opacity": 1
+            },
+            "opacity": 1
+          }
+        }
+      ]
+    }
+  ]
+}
