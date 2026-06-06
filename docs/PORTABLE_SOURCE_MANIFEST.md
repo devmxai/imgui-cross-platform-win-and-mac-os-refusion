@@ -24,14 +24,23 @@ Project files / commands
 apps/imgui/
   Current Dear ImGui native application.
   Contains the latest macOS Metal execution and UI state reached in development.
+  Uses a shared source layout: model, ui, timeline, authoring, query, and render
+  contracts are shared across platforms; platform folders own native hardware
+  and OS integration.
   Pins Dear ImGui to the exact dependency commit used by the validated build.
   Vendors the exact Font Awesome Free 7.2.0 Solid icon font and license used by
   the shared native editor shell.
   Contains the shared C++ ProjectAuthoringService, its focused tests, candidate
   project validation, and atomic accepted-project writes used by native adapters.
+  Contains the shared C++ WorkspaceModel contract for accepted assets, tracks,
+  clips, animation, visual fields, and FX fields consumed by UI, query, and
+  platform render executors.
   Contains the shared C++ FrameQueryService for evaluated queryFrame,
   queryLayerAtPixel, deterministic FrameTruthFingerprint parity checks, and
   pixel-true viewport/composition transforms used by agent-visible truth.
+  Contains the shared C++ PlatformRenderContracts header for
+  FinalFrameSurface request/status/generation diagnostics consumed by native
+  platform executors.
   The macOS adapter includes a native FSEventStream workspace watcher and
   accepted-state refresh command. Windows must provide the equivalent watcher
   behind the same project refresh boundary.
@@ -64,8 +73,17 @@ engine/platform/windows/
   Cross-platform Windows adapter contract and implementation map.
   This is the required boundary for a future Direct3D / Media Foundation executor.
 
+apps/imgui/src/platform/windows/
+  Native Windows adapter skeleton:
+  Win32 / Direct3D Dear ImGui shell, WindowsD3DRenderFrameExecutor fail-closed
+  boundary, Media Foundation source texture boundary, native dialog boundary,
+  project watcher boundary, and export boundary. It is intentionally not a fake
+  preview; it exists so Windows work can proceed in the correct platform folder
+  without touching macOS or forking the shared UI.
+
 docs/
-  Governing architecture, FX standard, portable status, and platform plans.
+  Governing architecture, shared development ownership, FX standard, portable
+  status, and platform plans.
 
 scripts/
   Verifiers that fail when a required part of this portable source path is missing.
@@ -118,5 +136,5 @@ cmake --build apps/imgui/build
 This guarantee covers source and documents. It deliberately does not include
 generated build output, dependency caches, user media, or project workspaces.
 The current macOS implementation is buildable. Windows receives the same Core
-contracts and platform boundary, while its Direct3D/Media Foundation executor
-still needs to be implemented.
+contracts and a dedicated platform skeleton, while its full Direct3D /
+Media Foundation FinalFrameSurface executor still needs to be completed.

@@ -2,6 +2,64 @@
 
 This document is the mandatory handoff for completing the current IMGUI Professional native editor on Windows.
 
+## Mandatory Agent Start
+
+Before changing code, the Windows agent must read:
+
+```text
+complete to windows.md
+docs/windows-platform-roadmap.md
+docs/shared-professional-development-structure.md
+apps/imgui/src/platform/windows/README.md
+docs/architecture/imgui-professional-plan.md
+docs/engine/architecture/platform-adapters.md
+```
+
+The Windows agent must keep implementation work inside:
+
+```text
+apps/imgui/src/platform/windows/
+```
+
+Allowed shared file edits are limited to build-system and documentation changes
+unless an approved shared contract change is required:
+
+```text
+apps/imgui/CMakeLists.txt
+docs/*
+```
+
+Do not modify these paths for Windows platform work:
+
+```text
+apps/imgui/src/platform/macos/
+apps/imgui/src/ui/
+apps/imgui/src/timeline/
+apps/imgui/src/authoring/
+apps/imgui/src/query/
+src/core/hyperframe/
+```
+
+unless the change is explicitly approved as a shared contract update.
+
+Shared contracts that Windows must consume:
+
+```text
+apps/imgui/src/model/WorkspaceModel.hpp
+apps/imgui/src/render/PlatformRenderContracts.hpp
+```
+
+Do not define Windows-only copies of workspace, clip, track, frame request, or
+FinalFrameSurface status contracts.
+
+The current Windows skeleton is intentionally fail-closed. It may show the same
+Dear ImGui shell and diagnostic preview, but it must not display fake preview
+pixels. The first accepted preview frame must come from:
+
+```text
+WindowsD3DRenderFrameExecutor -> FinalFrameSurface
+```
+
 The goal is not to rebuild the editor, not to introduce a second UI, and not to reinterpret project files. The goal is to keep the current C++ Dear ImGui shell and shared HyperFrame truth, then replace only the macOS platform backend with a Windows-native GPU and encoder backend.
 
 ## Current Proven State
@@ -74,6 +132,8 @@ apps/imgui/src/authoring/*
 apps/imgui/src/timeline/*
 apps/imgui/src/query/*
 src/core/hyperframe/*
+apps/imgui/src/model/*
+apps/imgui/src/render/*
 project ingestion / Gates semantics
 FrameDescriptor semantics
 RenderGraph semantics
@@ -612,4 +672,3 @@ no fallback renderer exists
 ```
 
 The Windows implementation is a platform backend completion, not a new product.
-

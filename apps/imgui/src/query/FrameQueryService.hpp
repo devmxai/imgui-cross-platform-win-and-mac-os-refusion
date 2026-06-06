@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "ui/EditorShell.hpp"
+#include "model/WorkspaceModel.hpp"
 
 namespace makelab::query {
 
@@ -69,7 +69,7 @@ CanvasViewTransform CreateCanvasViewTransform(int compositionWidth,
 Point CompositionToViewport(const CanvasViewTransform& transform, Point compositionPoint);
 Point ViewportToComposition(const CanvasViewTransform& transform, Point viewportPoint);
 
-FrameQueryResult QueryFrame(const imgui::WorkspaceViewState& workspace, int64_t frameIndex);
+FrameQueryResult QueryFrame(const makelab::model::WorkspaceViewState& workspace, int64_t frameIndex);
 const EvaluatedLayer* QueryLayerAtPixel(const FrameQueryResult& frame, double compositionX, double compositionY);
 uint64_t FrameTruthFingerprint(const FrameQueryResult& frame);
 

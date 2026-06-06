@@ -96,11 +96,11 @@ double EasedProgress(double value, const std::string& easing) {
   return 1.0 - std::pow(1.0 - t, 3.0);
 }
 
-double AnimatedValue(const std::vector<imgui::ClipItem::AnimationFrame>& frames,
+double AnimatedValue(const std::vector<model::ClipItem::AnimationFrame>& frames,
                      const std::string& property,
                      double localTime,
                      double fallback) {
-  std::vector<imgui::ClipItem::AnimationFrame> propertyFrames;
+  std::vector<model::ClipItem::AnimationFrame> propertyFrames;
   for (const auto& frame : frames) {
     if (frame.property == property && std::isfinite(frame.time) && std::isfinite(frame.value)) {
       propertyFrames.push_back(frame);
@@ -127,9 +127,9 @@ double AnimatedValue(const std::vector<imgui::ClipItem::AnimationFrame>& frames,
   return propertyFrames.back().value;
 }
 
-EvaluatedLayer EvaluateClip(const imgui::WorkspaceViewState& workspace,
-                            const imgui::TrackItem& track,
-                            const imgui::ClipItem& clip,
+EvaluatedLayer EvaluateClip(const model::WorkspaceViewState& workspace,
+                            const model::TrackItem& track,
+                            const model::ClipItem& clip,
                             int zIndex,
                             int64_t frameIndex) {
   EvaluatedLayer layer;
@@ -289,7 +289,7 @@ Point ViewportToComposition(const CanvasViewTransform& transform, Point viewport
   };
 }
 
-FrameQueryResult QueryFrame(const imgui::WorkspaceViewState& workspace, int64_t frameIndex) {
+FrameQueryResult QueryFrame(const model::WorkspaceViewState& workspace, int64_t frameIndex) {
   FrameQueryResult result;
   result.frameIndex = timeline::ClampFrame(frameIndex, std::max<int64_t>(1, workspace.durationFrames));
   result.timeSeconds = timeline::FrameToSeconds({result.frameIndex}, workspace.frameRate);

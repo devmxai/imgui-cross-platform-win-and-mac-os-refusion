@@ -27,6 +27,16 @@ Direct3D
 Media Foundation texture sources
 ```
 
+Windows now has an isolated platform skeleton under:
+
+```text
+apps/imgui/src/platform/windows/
+```
+
+It is intentionally fail-closed until the Direct3D executor produces a real
+`FinalFrameSurface`; it must not be converted into a MediaPlayer or fake preview
+path.
+
 ## Non-Negotiable Architecture
 
 ```text
@@ -100,6 +110,22 @@ The active ImGui application and the portable engine contracts are verified
 together. A missing required file, broken Core-relative import, invalid FX
 manifest, or excluded legacy UI path fails `npm run verify`.
 
+Shared development ownership is fixed by
+[Shared Professional Development Structure](docs/shared-professional-development-structure.md).
+General features must enter the shared Core/UI/Timeline/Authoring layers first;
+platform folders execute those contracts on native hardware.
+
+Current shared app contracts are:
+
+```text
+apps/imgui/src/model/WorkspaceModel.hpp
+apps/imgui/src/render/PlatformRenderContracts.hpp
+apps/imgui/src/timeline/TimelineTruth.hpp
+apps/imgui/src/authoring/ProjectAuthoringService.hpp
+apps/imgui/src/query/FrameQueryService.hpp
+apps/imgui/src/ui/EditorShell.hpp
+```
+
 See [Portable Source Manifest](docs/PORTABLE_SOURCE_MANIFEST.md) for the exact
 included and excluded boundaries.
 
@@ -142,9 +168,11 @@ npm run verify
 ## Important Documents
 
 - [IMGUI Professional Architecture Plan](docs/architecture/imgui-professional-plan.md)
+- [Shared Professional Development Structure](docs/shared-professional-development-structure.md)
 - [Professional HyperFrame FX Development Standard](docs/Professional%20HyperFrame%20FX%20Development%20Standard.md)
 - [Current macOS Status](docs/CURRENT_MACOS_STATUS.md)
 - [Portable Source Manifest](docs/PORTABLE_SOURCE_MANIFEST.md)
+- [Windows Platform Roadmap](docs/windows-platform-roadmap.md)
 
 ## Repository Boundary
 

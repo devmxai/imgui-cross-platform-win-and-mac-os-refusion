@@ -2,6 +2,19 @@
 
 This folder owns engine semantics.
 
+See also:
+
+```text
+docs/shared-professional-development-structure.md
+docs/engine/core-engine.md
+docs/engine/architecture/fx-animation-contract.md
+apps/imgui/src/model/WorkspaceModel.hpp
+apps/imgui/src/render/PlatformRenderContracts.hpp
+```
+
+If behavior changes what a frame, layer, timeline value, animation, FX, render
+pass, or export means, it belongs in Core before platform adapters execute it.
+
 ## Allowed
 
 ```text

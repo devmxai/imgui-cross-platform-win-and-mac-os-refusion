@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(MakelabImGuiProfessional LANGUAGES CXX OBJCXX)
+if(APPLE)
+  project(MakelabImGuiProfessional LANGUAGES CXX OBJCXX)
+else()
+  project(MakelabImGuiProfessional LANGUAGES CXX)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_OBJCXX_STANDARD 20)
-set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+if(APPLE)
+  set(CMAKE_OBJCXX_STANDARD 20)
+  set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
+endif()
 
 include(FetchContent)
 
@@ -67,70 +73,139 @@ set_source_files_properties(${MAKELAB_ICON_FONT} ${MAKELAB_UI_FONT} PROPERTIES
   MACOSX_PACKAGE_LOCATION "Resources/fonts"
 )
 
-add_library(makelab_imgui_backend STATIC
+set(MAKELAB_IMGUI_BACKEND_SOURCES
   ${imgui_SOURCE_DIR}/imgui.cpp
   ${imgui_SOURCE_DIR}/imgui_demo.cpp
   ${imgui_SOURCE_DIR}/imgui_draw.cpp
   ${imgui_SOURCE_DIR}/imgui_tables.cpp
   ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-  ${imgui_SOURCE_DIR}/backends/imgui_impl_metal.mm
-  ${imgui_SOURCE_DIR}/backends/imgui_impl_osx.mm
 )
 
-target_compile_options(makelab_imgui_backend PRIVATE
-  "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>"
+if(APPLE)
+  list(APPEND MAKELAB_IMGUI_BACKEND_SOURCES
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_metal.mm
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_osx.mm
+  )
+elseif(WIN32)
+  list(APPEND MAKELAB_IMGUI_BACKEND_SOURCES
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_win32.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
+  )
+else()
+  message(FATAL_ERROR "Makelab IMGUI Professional currently supports macOS and Windows only.")
+endif()
+
+add_library(makelab_imgui_backend STATIC
+  ${MAKELAB_IMGUI_BACKEND_SOURCES}
 )
+
+if(APPLE)
+  target_compile_options(makelab_imgui_backend PRIVATE
+    "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>"
+  )
+endif()
 
 target_include_directories(makelab_imgui_backend PUBLIC
   ${imgui_SOURCE_DIR}
   ${imgui_SOURCE_DIR}/backends
 )
 
-target_link_libraries(makelab_imgui_backend PUBLIC
-  "-framework AVFoundation"
-  "-framework Cocoa"
-  "-framework CoreServices"
-  "-framework CoreMedia"
-  "-framework CoreVideo"
-  "-framework GameController"
-  "-framework Metal"
-  "-framework MetalKit"
-  "-framework QuartzCore"
-  "-framework UniformTypeIdentifiers"
-)
+if(APPLE)
+  target_link_libraries(makelab_imgui_backend PUBLIC
+    "-framework AVFoundation"
+    "-framework Cocoa"
+    "-framework CoreServices"
+    "-framework CoreMedia"
+    "-framework CoreVideo"
+    "-framework GameController"
+    "-framework Metal"
+    "-framework MetalKit"
+    "-framework QuartzCore"
+    "-framework UniformTypeIdentifiers"
+  )
+elseif(WIN32)
+  target_compile_definitions(makelab_imgui_backend PUBLIC
+    NOMINMAX
+    WIN32_LEAN_AND_MEAN
+  )
+  target_link_libraries(makelab_imgui_backend PUBLIC
+    d3d11
+    dxgi
+    d3dcompiler
+  )
+endif()
 
-add_executable(makelab-imgui-professional MACOSX_BUNDLE
-  ${MAKELAB_ICON_FONT}
-  ${MAKELAB_UI_FONT}
-  src/platform/macos/MacApp.mm
-  src/ui/EditorShell.cpp
-)
+if(APPLE)
+  add_executable(makelab-imgui-professional MACOSX_BUNDLE
+    ${MAKELAB_ICON_FONT}
+    ${MAKELAB_UI_FONT}
+    src/platform/macos/MacApp.mm
+    src/ui/EditorShell.cpp
+  )
 
-target_compile_options(makelab-imgui-professional PRIVATE
-  "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>"
-)
+  target_compile_options(makelab-imgui-professional PRIVATE
+    "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>"
+  )
 
-set_target_properties(makelab-imgui-professional PROPERTIES
-  OUTPUT_NAME "Makelab IMGUI Professional"
-  MACOSX_BUNDLE_BUNDLE_NAME "Makelab IMGUI Professional"
-  MACOSX_BUNDLE_GUI_IDENTIFIER "com.makelab.imgui-professional"
-  MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
-  MACOSX_BUNDLE_BUNDLE_VERSION "1"
-)
+  set_target_properties(makelab-imgui-professional PROPERTIES
+    OUTPUT_NAME "Makelab IMGUI Professional"
+    MACOSX_BUNDLE_BUNDLE_NAME "Makelab IMGUI Professional"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.makelab.imgui-professional"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1.0"
+    MACOSX_BUNDLE_BUNDLE_VERSION "1"
+  )
 
-install(TARGETS makelab-imgui-professional BUNDLE DESTINATION .)
+  install(TARGETS makelab-imgui-professional BUNDLE DESTINATION .)
 
-target_include_directories(makelab-imgui-professional PRIVATE
-  src
-)
+  target_include_directories(makelab-imgui-professional PRIVATE
+    src
+  )
 
-target_link_libraries(makelab-imgui-professional PRIVATE
-  makelab_project_authoring
-  makelab_frame_query
-  makelab_imgui_backend
-  lunasvg::lunasvg
-  "-framework VideoToolbox"
-)
+  target_link_libraries(makelab-imgui-professional PRIVATE
+    makelab_project_authoring
+    makelab_frame_query
+    makelab_imgui_backend
+    lunasvg::lunasvg
+    "-framework VideoToolbox"
+  )
+elseif(WIN32)
+  add_executable(makelab-imgui-professional WIN32
+    src/platform/windows/WinApp.cpp
+    src/platform/windows/WindowsD3DRenderFrameExecutor.cpp
+    src/platform/windows/WindowsExportExecutor.cpp
+    src/platform/windows/WindowsMediaFoundationTextureSource.cpp
+    src/platform/windows/WindowsProjectDialog.cpp
+    src/platform/windows/WindowsProjectWatcher.cpp
+    src/ui/EditorShell.cpp
+  )
+
+  target_compile_definitions(makelab-imgui-professional PRIVATE
+    NOMINMAX
+    WIN32_LEAN_AND_MEAN
+  )
+
+  set_target_properties(makelab-imgui-professional PROPERTIES
+    OUTPUT_NAME "Makelab IMGUI Professional"
+  )
+
+  target_include_directories(makelab-imgui-professional PRIVATE
+    src
+  )
+
+  target_link_libraries(makelab-imgui-professional PRIVATE
+    makelab_project_authoring
+    makelab_frame_query
+    makelab_imgui_backend
+    lunasvg::lunasvg
+    d3d11
+    dxgi
+    d3dcompiler
+    dwmapi
+    ole32
+    shell32
+    comdlg32
+  )
+endif()
 
 include(CTest)
 
